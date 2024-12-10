@@ -39,12 +39,6 @@ NAME_DIRECTORY_PY_SOURCES := 'myapp'
 NAME_DIRECTORY_PY_TESTS := 'test'
 NAME_FILE_GENERATED_RESOURCES := 'generated_resources.py'
 NAME_FILE_MAIN_ENTRY := 'main.py'
-NAME_DIRECTORY_GENERATED_SOURCES := 'src'
-NAME_DIRECTORY_EXE := 'portable'
-NAME_DIRECTORY_INSTALLER := 'installer'
-NAME_FILE_FREEZE_ENTRY := 'freeze.py'
-NAME_FILE_ICON := 'icon.ico'
-
 
 #####                     #####
 ##### Existing Directories #####
@@ -64,8 +58,6 @@ DIRECTORY_QML_TESTS := DIRECTORY_ROOT + '/qml'
 #####               #####
 
 FILE_APP_ENTRY := DIRECTORY_ROOT + '/' + NAME_FILE_MAIN_ENTRY
-FILE_FREEZE_ENTRY := DIRECTORY_ROOT + '/' + NAME_FILE_FREEZE_ENTRY
-FILE_ICON := DIRECTORY_ROOT + '/' + NAME_FILE_ICON
 
 #####                      #####
 ##### Generated Directories #####
@@ -159,26 +151,14 @@ build: _check-pyside-setup _clean-build _clean-develop _compile-resources
     @cp \
         {{ FILE_BUILD_RESOURCES }} \
         {{ DIRECTORY_BUILD_PY }}
-    @echo '{{FILE_BUILD_RESOURCES}} has been copied to {{ DIRECTORY_BUILD_PY }} .'
-    
-    @cp \
-        {{ FILE_FREEZE_ENTRY }} \
-        {{ DIRECTORY_BUILD_SOURCES }}
-    @echo '{{FILE_FREEZE_ENTRY}} has been copied to {{ DIRECTORY_BUILD_SOURCES }} .'
-
-    @cp \
-        {{ FILE_ICON }} \
-        {{ DIRECTORY_BUILD_SOURCES }}
-    @echo '{{FILE_ICON}} has been copied to {{ DIRECTORY_BUILD_SOURCES }} .'
-    
     @cp \
         {{ FILE_APP_ENTRY }} \
         {{ DIRECTORY_BUILD_SOURCES }}
     @echo '{{FILE_APP_ENTRY}} has been copied to {{ DIRECTORY_BUILD_SOURCES }} .'
     
     @echo ''; \
-        echo 'Please find the finished project in {{ DIRECTORY_BUILD_SOURCES }}'
-        
+        echo 'Please find the finished project in {{ DIRECTORY_BUILD_RELEASE }}'
+
 # Build and compile resources into source directory
 [group('build')]
 build-develop: _check-pyside-setup _clean-develop _compile-resources
