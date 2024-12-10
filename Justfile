@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-PYTHON_DIR := invocation_directory() + '/' + if os_family() == 'windows' { 'venv/Scripts' } else { 'venv/bin' }
+PYTHON_DIR := invocation_directory() + '/' + if os_family() == 'windows' { '.venv/Scripts' } else { 'venv/bin' }
 PYTHON := PYTHON_DIR + if os_family() == 'windows' { '/python.exe' } else { '/python3' }
 
 #
@@ -39,6 +39,12 @@ NAME_DIRECTORY_PY_SOURCES := 'myapp'
 NAME_DIRECTORY_PY_TESTS := 'test'
 NAME_FILE_GENERATED_RESOURCES := 'generated_resources.py'
 NAME_FILE_MAIN_ENTRY := 'main.py'
+NAME_DIRECTORY_GENERATED_SOURCES := 'src'
+NAME_DIRECTORY_EXE := 'portable'
+NAME_DIRECTORY_INSTALLER := 'installer'
+NAME_FILE_FREEZE_ENTRY := 'freeze.py'
+NAME_FILE_ICON := 'icon.ico'
+
 
 #####                     #####
 ##### Existing Directories #####
@@ -58,23 +64,27 @@ DIRECTORY_QML_TESTS := DIRECTORY_ROOT + '/qml'
 #####               #####
 
 FILE_APP_ENTRY := DIRECTORY_ROOT + '/' + NAME_FILE_MAIN_ENTRY
+FILE_FREEZE_ENTRY := DIRECTORY_ROOT + '/' + NAME_FILE_FREEZE_ENTRY
+FILE_ICON := DIRECTORY_ROOT + '/' + NAME_FILE_ICON
 
 #####                      #####
 ##### Generated Directories #####
 #####                      #####
 
 DIRECTORY_BUILD := DIRECTORY_ROOT + '/' + NAME_DIRECTORY_BUILD
-DIRECTORY_BUILD_PY := DIRECTORY_BUILD_RELEASE + '/' + NAME_DIRECTORY_PY_SOURCES
 
 #
 
 DIRECTORY_BUILD_QRC_DATA := DIRECTORY_BUILD + '/qrc-data'
 DIRECTORY_BUILD_QRC_I18N := DIRECTORY_BUILD + '/qrc-i18n'
 DIRECTORY_BUILD_QRC_QML := DIRECTORY_BUILD + '/qrc-qml'
-DIRECTORY_BUILD_RELEASE := DIRECTORY_BUILD + '/release'
 DIRECTORY_BUILD_RESOURCES := DIRECTORY_BUILD + '/resources'
 DIRECTORY_BUILD_TRANSLATIONS := DIRECTORY_BUILD + '/translations'
-
+DIRECTORY_BUILD_RELEASE := DIRECTORY_BUILD + '/release'
+DIRECTORY_BUILD_SOURCES := DIRECTORY_BUILD_RELEASE + '/' + NAME_DIRECTORY_GENERATED_SOURCES
+DIRECTORY_BUILD_PY := DIRECTORY_BUILD_SOURCES + '/' + NAME_DIRECTORY_PY_SOURCES
+DIRECTORY_BUILD_EXE := DIRECTORY_BUILD_RELEASE + '/' + NAME_DIRECTORY_EXE
+DIRECTORY_BUILD_INSTALLER := DIRECTORY_BUILD_RELEASE + '/' + NAME_DIRECTORY_INSTALLER
 #####                #####
 ##### Generated Files #####
 #####                #####
@@ -91,25 +101,84 @@ FILE_PY_TEST_RESOURCES := DIRECTORY_PY_TESTS + '/' + NAME_FILE_GENERATED_RESOURC
 _default:
     @just --list
 
-# Build full project into build/release
+# Build installer file into release/installer
+[group('build')]
+build-installer: build
+    @rm -rf \
+        {{ DIRECTORY_BUILD_INSTALLER }}
+    @echo '{{DIRECTORY_BUILD_INSTALLER}} has been removed .'
+    @rm -rf \
+        {{ DIRECTORY_BUILD_EXE}}
+    @echo '{{DIRECTORY_BUILD_EXE}} has been removed .'
+    
+
+    @cd {{ DIRECTORY_BUILD_SOURCES }}; \
+        {{ PYTHON }} \
+            {{NAME_FILE_FREEZE_ENTRY}} \
+            bdist_msi \
+            --bdist-dir {{ DIRECTORY_BUILD_EXE}} \
+            --dist-dir {{ DIRECTORY_BUILD_INSTALLER }} 
+
+    @echo ''; \
+        echo 'Please find the finished installer file in {{ DIRECTORY_BUILD_INSTALLER }}'
+
+# Build executable file into release/Exe
+[group('build')]
+build-exe: build
+    @rm -rf \
+        {{ DIRECTORY_BUILD_EXE }}
+    @echo '{{DIRECTORY_BUILD_EXE}} has been removed .'
+    @mkdir -p \
+        {{ DIRECTORY_BUILD_EXE }}
+    @echo '{{DIRECTORY_BUILD_EXE}} has been created .'
+
+    @cd {{ DIRECTORY_BUILD_SOURCES }}; \
+        {{ PYTHON }} \
+            {{NAME_FILE_FREEZE_ENTRY}} \
+            build_exe \
+            --build-exe {{ DIRECTORY_BUILD_EXE }} 
+
+    @echo ''; \
+        echo 'Please find the finished executable file in {{ DIRECTORY_BUILD_EXE }}'
+# Build full project into release/Src
 [group('build')]
 build: _check-pyside-setup _clean-build _clean-develop _compile-resources
     @rm -rf \
-        {{ DIRECTORY_BUILD_PY }}
+        {{ DIRECTORY_BUILD_SOURCES }}
+    @echo '{{DIRECTORY_BUILD_SOURCES}} has been removed .'
+
     @mkdir -p \
         {{ DIRECTORY_BUILD_PY }}
+    @echo '{{DIRECTORY_BUILD_PY}} has been created .'
+
     @cp -r \
         {{ DIRECTORY_PY_SOURCES }}/. \
         {{ DIRECTORY_BUILD_PY }}
+    @echo '{{DIRECTORY_PY_SOURCES}} has been copied to {{ DIRECTORY_BUILD_PY }} .'
+
     @cp \
         {{ FILE_BUILD_RESOURCES }} \
         {{ DIRECTORY_BUILD_PY }}
+    @echo '{{FILE_BUILD_RESOURCES}} has been copied to {{ DIRECTORY_BUILD_PY }} .'
+    
+    @cp \
+        {{ FILE_FREEZE_ENTRY }} \
+        {{ DIRECTORY_BUILD_SOURCES }}
+    @echo '{{FILE_FREEZE_ENTRY}} has been copied to {{ DIRECTORY_BUILD_SOURCES }} .'
+
+    @cp \
+        {{ FILE_ICON }} \
+        {{ DIRECTORY_BUILD_SOURCES }}
+    @echo '{{FILE_ICON}} has been copied to {{ DIRECTORY_BUILD_SOURCES }} .'
+    
     @cp \
         {{ FILE_APP_ENTRY }} \
-        {{ DIRECTORY_BUILD_RELEASE }}
+        {{ DIRECTORY_BUILD_SOURCES }}
+    @echo '{{FILE_APP_ENTRY}} has been copied to {{ DIRECTORY_BUILD_SOURCES }} .'
+    
     @echo ''; \
-        echo 'Please find the finished project in {{ DIRECTORY_BUILD_RELEASE }}'
-
+        echo 'Please find the finished project in {{ DIRECTORY_BUILD_SOURCES }}'
+        
 # Build and compile resources into source directory
 [group('build')]
 build-develop: _check-pyside-setup _clean-develop _compile-resources
@@ -183,11 +252,15 @@ _clean-test:
     	{{ FILE_PY_TEST_RESOURCES }}
 
 _check-pyside-setup:
-    @which {{ PYTHON }}
-    @which {{ TOOL_CLI_LUPDATE }}
-    @which {{ TOOL_CLI_LRELEASE }}
-    @which {{ TOOL_CLI_RCC }}
-    @echo ''
+    @echo "Checking Python installation..."  
+    @which {{ PYTHON }}  
+    @echo "Checking lupdate tool..."  
+    @which {{ TOOL_CLI_LUPDATE }}  
+    @echo "Checking lrelease tool..."  
+    @which {{ TOOL_CLI_LRELEASE }}  
+    @echo "Checking rcc tool..."  
+    @which {{ TOOL_CLI_RCC }}  
+    @echo 'All checks completed.'  
 
 _check-qml-setup:
     @which {{ TOOL_CLI_QML_TESTRUNNER }}

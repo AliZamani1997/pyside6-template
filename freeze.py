@@ -11,18 +11,18 @@ msi_data = {
     "ProgId": [
         ("Prog.Id", None, None, "This is a description", "IconId", None),
     ],
-    # "Icon": [
-    #     ("IconId", "icon.ico"),
-    # ],
+    "Icon": [
+        ("IconId", "icon.ico"),
+    ],
 }
 
 bdist_msi_options = {
     "add_to_path": True,
     "data": msi_data,
-    "environment_variables": [
-        ("E_MYAPP_VAR", "=-*MYAPP_VAR", "1", "TARGETDIR")
-    ],
-    "upgrade_code": "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}",
+    # "environment_variables": [
+    #     ("E_MYAPP_VAR", "=-*MYAPP_VAR", "1", "TARGETDIR")
+    # ],
+    # "upgrade_code": "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}",
 }
 
 
@@ -36,7 +36,7 @@ executables = [
         "main.py",
         copyright="Copyright (C) 2024 myApp",
         base="gui",
-        # icon="icon.ico",
+        icon="icon.ico",
         shortcut_name="My Program Name",
         shortcut_dir="MyProgramMenu",
         target_name="MyApp.exe",
